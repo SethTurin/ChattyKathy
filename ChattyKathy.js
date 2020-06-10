@@ -108,6 +108,7 @@ function ChattyKathy(settings) {
             var polly = new AWS.Polly();
             var params = {
                 OutputFormat: 'mp3',
+                engine: "neural",
                 Text: `<speak>${message}</speak>`,
                 VoiceId: settings.pollyVoiceId,
                 TextType: 'ssml'
