@@ -190,21 +190,21 @@ function ChattyKathy(settings) {
                 }
             });
 
-            // var params = {
-            //     OutputFormat: 'mp3',
-            //     Engine: "neural",
-            //     Text: `<speak>${message}</speak>`,
-            //     VoiceId: settings.pollyVoiceId,
-            //     TextType: 'ssml'
-            // }
-            // polly.synthesizeSpeech(params, function (error, data) {
-            //     if (error) {
-            //         errorCallback(error)
-            //     } else {
-            //         saveSpeechToLocalCache(message, data.AudioStream);
-            //         successCallback(data.AudioStream);
-            //     }
-            // });
+            params = {
+                OutputFormat: 'mp3',
+                Engine: "neural",
+                Text: `<speak>${message}</speak>`,
+                VoiceId: settings.pollyVoiceId,
+                TextType: 'ssml'
+            }
+            polly.synthesizeSpeech(params, function (error, data) {
+                if (error) {
+                    errorCallback(error)
+                } else {
+                    saveSpeechToLocalCache(message, data.AudioStream);
+                    successCallback(data.AudioStream);
+                }
+            });
         });
     }
     function setIntervalX(callback, delay, repetitions) {
