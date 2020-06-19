@@ -1,4 +1,29 @@
-﻿/*! ChattyKathy 1.0.1
+
+
+(window.test = function () { 
+  console.log("hmm");
+    var awsCredentials = new AWS.Credentials("AKIATLLC5TTG743A6TPA", "AeyXndSU5uWKs+jvR0rgYuN+aTV/7Ou/eCEpsnvr");
+    var settings = {
+        awsCredentials: awsCredentials,
+        awsRegion: "us-east-1",
+        pollyVoiceId: "Joanna",
+        cacheSpeech: true
+    }
+    var kathy = ChattyKathy(settings);
+    
+
+    kathy.Speak("I can be used for an amazing user experience!");
+    // kathy.copyS3File();
+    // if (kathy.IsSpeaking()) {
+    //     kathy.ShutUp(); 
+    // }
+
+    kathy.ForgetCachedSpeech();
+});
+
+
+
+/*! ChattyKathy 1.0.1
  * ©2016 Elliott Beaty
  */
 
@@ -39,6 +64,7 @@ function ChattyKathy(settings) {
         self: this,
         playlist:[],
         // Speak
+        copyS3File: function () { copyS3File(); },
         Speak: function (msg) {
             if (isSpeaking) {
                 this.playlist.push(msg);
@@ -65,7 +91,7 @@ function ChattyKathy(settings) {
         }
 
     }
-
+    var intervalID;
     // Quit talking
     function shutUp() {
         isSpeaking = false;
@@ -101,29 +127,98 @@ function ChattyKathy(settings) {
             return requestSpeechFromLocalCache(message);
         }
     }
+    function renameFile(oldName, newName) {
+      s3 = new AWS.S3();
 
+      var params = {
+        Bucket: 'flowaudio',
+        CopySource: "flowaudio/" + oldName + ".mp3",
+        Key: newName +'.mp3',
+        ACL: 'public-read'
+      };
+      s3.copyObject(params, function(err, data) {
+        if (err) {
+          console.log(err, err.stack);
+        }// an error occurred
+        else     {
+          console.log(data); 
+
+      
+      params = {
+        Bucket: 'flowaudio',
+        Key: oldName + ".mp3",
+
+      };
+      s3.deleteObject(params, function(err, data) {
+        if (err) { console.log(err, err.stack);} // an error occurred
+        else    {
+          clearInterval(intervalID);
+          
+          console.log("all clear!");
+          console.log(data);
+        }
+        // successful response
+      });
+          }// successful response
+      });
+    }
     // Make request to Amazon polly
     function requestSpeechFromAWS(message) {
         return new Promise(function (successCallback, errorCallback) {
             var polly = new AWS.Polly();
             var params = {
+
+ 
                 OutputFormat: 'mp3',
+                OutputS3BucketName: "flowaudio",
                 Engine: "neural",
                 Text: `<speak>${message}</speak>`,
                 VoiceId: settings.pollyVoiceId,
                 TextType: 'ssml'
             }
-            polly.synthesizeSpeech(params, function (error, data) {
+            polly.startSpeechSynthesisTask(params, function (error, data) {
                 if (error) {
                     errorCallback(error)
                 } else {
-                    saveSpeechToLocalCache(message, data.AudioStream);
-                    successCallback(data.AudioStream);
+                  setIntervalX(function () {
+                    renameFile(data.SynthesisTask.TaskId, message.replace(/\s/g, "-"))
+                  }, 5000, 10);
+                  console.log("finished");
+                  window.mytask = data;
+                  console.log(data);
+                  console.log(window.mytask);
                 }
             });
+
+            // var params = {
+            //     OutputFormat: 'mp3',
+            //     Engine: "neural",
+            //     Text: `<speak>${message}</speak>`,
+            //     VoiceId: settings.pollyVoiceId,
+            //     TextType: 'ssml'
+            // }
+            // polly.synthesizeSpeech(params, function (error, data) {
+            //     if (error) {
+            //         errorCallback(error)
+            //     } else {
+            //         saveSpeechToLocalCache(message, data.AudioStream);
+            //         successCallback(data.AudioStream);
+            //     }
+            // });
         });
     }
+    function setIntervalX(callback, delay, repetitions) {
+        var x = 0;
+        intervalID = window.setInterval(function () {
 
+           callback();
+
+           if (++x === repetitions) {
+               window.clearInterval(intervalID);
+           }
+        }, delay);
+      return intervalID
+    }
     // Save to local cache
     function saveSpeechToLocalCache(message, audioStream) {
         var record = {
@@ -203,7 +298,6 @@ function ChattyKathy(settings) {
 
     return kathy;
 }
-
 
 
 
