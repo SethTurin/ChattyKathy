@@ -1,6 +1,5 @@
 
 
-
 /*! ChattyKathy 1.0.1
  * ©2016 Elliott Beaty
  */
@@ -69,7 +68,6 @@ function ChattyKathy(settings) {
         }
 
     }
-    var intervalID;
     // Quit talking
     function shutUp() {
         isSpeaking = false;
@@ -105,7 +103,7 @@ function ChattyKathy(settings) {
             return requestSpeechFromLocalCache(message);
         }
     }
-    function renameFile(oldName, newName) {
+    function renameFile(oldName, newName, callback) {
       s3 = new AWS.S3();
 
       var params = {
@@ -130,9 +128,7 @@ function ChattyKathy(settings) {
       s3.deleteObject(params, function(err, data) {
         if (err) { console.log(err, err.stack);} // an error occurred
         else    {
-          clearInterval(intervalID);
-          
-          console.log("all clear!");
+          callback();
           console.log(data);
         }
         // successful response
@@ -158,9 +154,18 @@ function ChattyKathy(settings) {
                 if (error) {
                     errorCallback(error)
                 } else {
-                  setIntervalX(function () {
-                    renameFile(data.SynthesisTask.TaskId, message.replace(/\s/g, "-"))
-                  }, 5000, 10);
+                    var x = 0;
+                    var intervalID = window.setInterval(function () {
+                        renameFile(data.SynthesisTask.TaskId, message.replace(/\s/g, "-"), function () {
+                            window.clearInterval(intervalID);
+                            console.log("all clear!");
+                        });
+                        if (++x === 10) {
+                            window.clearInterval(intervalID);
+                            console.log("failed to rename");
+                        }
+                  }, 5000);
+               
                   console.log("finished");
                   window.mytask = data;
                   console.log(data);
@@ -185,18 +190,7 @@ function ChattyKathy(settings) {
             });
         });
     }
-    function setIntervalX(callback, delay, repetitions) {
-        var x = 0;
-        intervalID = window.setInterval(function () {
 
-           callback();
-
-           if (++x === repetitions) {
-               window.clearInterval(intervalID);
-           }
-        }, delay);
-      return intervalID
-    }
     // Save to local cache
     function saveSpeechToLocalCache(message, audioStream) {
         var record = {
