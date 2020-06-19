@@ -1,27 +1,5 @@
 
 
-(window.test = function () { 
-  console.log("hmm");
-    var awsCredentials = new AWS.Credentials("AKIATLLC5TTG743A6TPA", "AeyXndSU5uWKs+jvR0rgYuN+aTV/7Ou/eCEpsnvr");
-    var settings = {
-        awsCredentials: awsCredentials,
-        awsRegion: "us-east-1",
-        pollyVoiceId: "Joanna",
-        cacheSpeech: true
-    }
-    var kathy = ChattyKathy(settings);
-    
-
-    kathy.Speak("I can be used for an amazing user experience!");
-    // kathy.copyS3File();
-    // if (kathy.IsSpeaking()) {
-    //     kathy.ShutUp(); 
-    // }
-
-    kathy.ForgetCachedSpeech();
-});
-
-
 
 /*! ChattyKathy 1.0.1
  * ©2016 Elliott Beaty
